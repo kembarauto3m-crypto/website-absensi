@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absen Harian Bolacamar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #001f60;
+            --secondary-color: #ffffff;
+            --accent-color: #ffcc00;
+            --success-color: #28a745;
+            --text-color-dark: #333;
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --shadow-light: 0 8px 25px rgba(0, 0, 0, 0.5);
+            --overlay-color: rgba(0, 0, 0, 0.65);
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #000;
+            color: var(--text-color-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+            background-image: url('https://vpnoke.com/camarbg'); /* URL gambar stadion Anda */
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-color);
+            z-index: -1;
+        }
+        .container {
+            background: var(--container-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        p {
+            color: var(--text-color-dark);
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            color: var(--text-color-dark);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            transition: background-color 0.3s, transform 0.2s;
+            margin-bottom: 10px;
+        }
+        button:hover:not(.disabled) {
+            background-color: color-mix(in srgb, var(--primary-color) 80%, black);
+            transform: translateY(-2px);
+        }
+        button.disabled {
+            background-color: #cccccc;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .progress-section {
+            margin-top: 30px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .day-header {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .day-card {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            padding: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+        .day-card.empty {
+            background-color: transparent;
+            box-shadow: none;
+            cursor: default;
+        }
+        .day-card.today {
+            background-color: var(--accent-color);
+            color: var(--text-color-dark);
+            border: 2px solid var(--primary-color);
+        }
+        .day-card.absen {
+            background-color: var(--success-color);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.4);
+        }
+        #absenPage, #masterPage, #memberAbsenPage {
+            display: none;
+        }
+        #displayName, #today, #absenCount {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        #memberList, #adminList {
+            text-align: left;
+            margin-top: 20px;
+            list-style-type: none;
+            padding: 0;
+        }
+        #memberList li, #adminList li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f0f0f0;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        .view-btn, .edit-btn, .delete-btn {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            width: auto;
+            padding: 5px 10px;
+            margin-left: 5px;
+        }
+        .edit-btn { background-color: #ffc107; color: var(--text-color-dark); }
+        .delete-btn { background-color: #dc3545; }
+        #memberAbsenGrid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="loginPage">
+        <h1><i class="fas fa-calendar-alt"></i> Absen Harian Bolacamar</h1>
+        <p>Masukkan nama Anda untuk melanjutkan.</p>
+        <div class="input-group">
+            <input type="text" id="usernameInput" placeholder="Nama Anda">
+        </div>
+        <button id="loginBtn">Masuk</button>
+    </div>
+    
+    <div class="container" id="absenPage">
+        <h1><i class="fas fa-trophy"></i> Absensi Bulan <span id="monthName"></span></h1>
+        <p>Selamat Datang, <span id="displayName"></span>!</p>
+        <p>Hari ini: <span id="today"></span></p>
+        <p>Total Absen Bulan Ini: <span id="absenCount">0</span> hari</p>
+        <button id="absenBtn">Absen Hari Ini</button>
+        <button id="absenPageLogoutBtn">Keluar</button>
+        <div class="progress-section">
+            <h2>Progress Absen</h2>
+            <div class="grid-container" id="calendarGrid"></div>
+        </div>
+    </div>
+    
+    <div class="container" id="masterPage">
+        <h1><i class="fas fa-cogs"></i> Master Menu</h1>
+        <p>Selamat Datang, Admin!</p>
+        
+        <div class="input-group">
+            <input type="text" id="newMemberInput" placeholder="Nama Member Baru">
+            <button id="addMemberBtn">Tambah Member</button>
+        </div>
+        <p><strong>Daftar Member:</strong></p>
+        <ul id="memberList"></ul>
+        
+        <hr> <p><strong>Tambah Admin Baru:</strong></p>
+        <div class="input-group">
+            <input type="text" id="newAdminInput" placeholder="Nama Admin Baru">
+            <button id="addAdminBtn">Tambah Admin</button>
+        </div>
+        <p><strong>Daftar Admin:</strong></p>
+        <ul id="adminList"></ul>
+        
+        <button id="logoutBtn">Keluar</button>
+    </div>
+
+    <div class="container" id="memberAbsenPage">
+        <h1><i class="fas fa-history"></i> Riwayat Absensi</h1>
+        <p>Riwayat untuk: <strong id="memberAbsenName"></strong></p>
+        <div class="grid-container" id="memberAbsenGrid"></div>
+        <button id="backToMasterBtn">Kembali ke Master</button>
+    </div>
+
+    <script>
+        const today = new Date().getDate();
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        const loginPage = document.getElementById('loginPage');
+        const absenPage = document.getElementById('absenPage');
+        const masterPage = document.getElementById('masterPage');
+        const memberAbsenPage = document.getElementById('memberAbsenPage');
+        const usernameInput = document.getElementById('usernameInput');
+        const newMemberInput = document.getElementById('newMemberInput');
+        const newAdminInput = document.getElementById('newAdminInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const addMemberBtn = document.getElementById('addMemberBtn');
+        const addAdminBtn = document.getElementById('addAdminBtn');
+        const absenBtn = document.getElementById('absenBtn');
+        const logoutBtnMaster = document.getElementById('logoutBtn');
+        const logoutBtnAbsenPage = document.getElementById('absenPageLogoutBtn');
+        const backToMasterBtn = document.getElementById('backToMasterBtn');
+        const displayName = document.getElementById('displayName');
+        const absenCountDisplay = document.getElementById('absenCount');
+        const monthNameDisplay = document.getElementById('monthName');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const memberList = document.getElementById('memberList');
+        const adminList = document.getElementById('adminList');
+        const memberAbsenGrid = document.getElementById('memberAbsenGrid');
+        const memberAbsenName = document.getElementById('memberAbsenName');
+        
+        let absenDays = [];
+        let validUsers = [];
+        let adminUsers = [];
+        let loggedInUser = '';
+
+        function saveToLocalStorage() {
+            localStorage.setItem(`absen_data_${loggedInUser}`, JSON.stringify(absenDays));
+            localStorage.setItem('valid_users', JSON.stringify(validUsers));
+            localStorage.setItem('admin_users', JSON.stringify(adminUsers));
+        }
+
+        function loadFromLocalStorage() {
+            const savedUsers = localStorage.getItem('valid_users');
+            if (savedUsers) {
+                validUsers = JSON.parse(savedUsers);
+            } else {
+                validUsers = [];
+            }
+            const savedAdmins = localStorage.getItem('admin_users');
+            if (savedAdmins) {
+                adminUsers = JSON.parse(savedAdmins);
+            } else {
+                adminUsers = ['admin']; // Admin default jika belum ada
+            }
+        }
+        
+        function populateMemberList() {
+            memberList.innerHTML = '';
+            validUsers.filter(user => !adminUsers.includes(user)).forEach((user, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <span>${user}</span>
+                    <div>
+                        <button class="view-btn" data-user="${user}">Lihat</button>
+                        <button class="edit-btn" data-user="${user}" data-index="${index}">Edit</button>
+                        <button class="delete-btn" data-user="${user}" data-index="${index}">Hapus</button>
+                    </div>
+                `;
+                memberList.appendChild(listItem);
+            });
+        }
+        
+        function populateAdminList() {
+            adminList.innerHTML = '';
+            adminUsers.forEach((user, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <span>${user}</span>
+                    <div>
+                        <button class="edit-btn" data-user="${user}" data-index="${index}">Edit</button>
+                        <button class="delete-btn" data-user="${user}" data-index="${index}">Hapus</button>
+                    </div>
+                `;
+                adminList.appendChild(listItem);
+            });
+        }
+
+        function populateCalendar(daysArray, targetGrid) {
+            targetGrid.innerHTML = '';
+            dayNames.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.classList.add('day-header');
+                dayHeader.innerText = day;
+                targetGrid.appendChild(dayHeader);
+            });
+            const startDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+            for (let i = 0; i < startDay; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.classList.add('day-card', 'empty');
+                targetGrid.appendChild(emptyDiv);
+            }
+            for (let i = 1; i <= daysInMonth; i++) {
+                const div = document.createElement('div');
+                div.classList.add('day-card');
+                div.innerText = i;
+                if (i === today) {
+                    div.classList.add('today');
+                }
+                if (daysArray.includes(i)) {
+                    div.classList.add('absen');
+                }
+                targetGrid.appendChild(div);
+            }
+        }
+
+        function checkAbsenStatus() {
+            if (absenDays.includes(today)) {
+                absenBtn.classList.add('disabled');
+                absenBtn.setAttribute('disabled', 'true');
+                absenBtn.innerText = `Sudah Absen Hari Ini ✅`;
+            } else {
+                absenBtn.classList.remove('disabled');
+                absenBtn.removeAttribute('disabled');
+                absenBtn.innerText = `Absen Hari Ini`;
+            }
+        }
+        
+        function handleLogout() {
+            masterPage.style.display = 'none';
+            absenPage.style.display = 'none';
+            memberAbsenPage.style.display = 'none';
+            loginPage.style.display = 'block';
+            usernameInput.value = '';
+            memberList.innerHTML = '';
+            adminList.innerHTML = '';
+            loggedInUser = '';
+        }
+
+        loadFromLocalStorage();
+
+        loginPage.style.display = 'block';
+        absenPage.style.display = 'none';
+        masterPage.style.display = 'none';
+        memberAbsenPage.style.display = 'none';
+
+        loginBtn.addEventListener('click', () => {
+            const username = usernameInput.value.trim().toLowerCase();
+            
+            if (!validUsers.includes(username) && !adminUsers.includes(username)) {
+                alert('Nama pengguna tidak valid. Silakan coba lagi.');
+                return;
+            }
+
+            loggedInUser = username;
+            
+            if (adminUsers.includes(username)) {
+                loginPage.style.display = 'none';
+                masterPage.style.display = 'block';
+                populateMemberList();
+                populateAdminList();
+            } else {
+                loginPage.style.display = 'none';
+                absenPage.style.display = 'block';
+                displayName.innerText = username;
+                monthNameDisplay.innerText = monthNames[currentMonth];
+                document.getElementById('today').innerText = today;
+                
+                const savedAbsenData = localStorage.getItem(`absen_data_${loggedInUser}`);
+                if (savedAbsenData) {
+                    absenDays = JSON.parse(savedAbsenData);
+                } else {
+                    absenDays = [];
+                }
+                
+                absenCountDisplay.innerText = absenDays.length;
+                populateCalendar(absenDays, calendarGrid);
+                checkAbsenStatus();
+            }
+        });
+
+        addMemberBtn.addEventListener('click', () => {
+            const newMember = newMemberInput.value.trim().toLowerCase();
+            if (newMember && !validUsers.includes(newMember) && !adminUsers.includes(newMember)) {
+                validUsers.push(newMember);
+                saveToLocalStorage();
+                populateMemberList();
+                newMemberInput.value = '';
+                alert(`Member "${newMember}" berhasil ditambahkan.`);
+            } else if (validUsers.includes(newMember) || adminUsers.includes(newMember)) {
+                alert('Nama member sudah ada!');
+            }
+        });
+        
+        addAdminBtn.addEventListener('click', () => {
+            const newAdmin = newAdminInput.value.trim().toLowerCase();
+            if (newAdmin && !adminUsers.includes(newAdmin) && !validUsers.includes(newAdmin)) {
+                adminUsers.push(newAdmin);
+                saveToLocalStorage();
+                populateAdminList();
+                newAdminInput.value = '';
+                alert(`Admin "${newAdmin}" berhasil ditambahkan.`);
+            } else if (adminUsers.includes(newAdmin) || validUsers.includes(newAdmin)) {
+                alert('Nama admin sudah ada!');
+            }
+        });
+
+        absenBtn.addEventListener('click', () => {
+            if (!absenDays.includes(today)) {
+                absenDays.push(today);
+                saveToLocalStorage();
+                absenCountDisplay.innerText = absenDays.length;
+                checkAbsenStatus();
+                populateCalendar(absenDays, calendarGrid);
+            }
+        });
+        
+        logoutBtnMaster.addEventListener('click', handleLogout);
+        logoutBtnAbsenPage.addEventListener('click', handleLogout);
+
+        memberList.addEventListener('click', (event) => {
+            if (event.target.classList.contains('view-btn')) {
+                const targetUser = event.target.dataset.user;
+                const savedAbsenData = localStorage.getItem(`absen_data_${targetUser}`);
+                const memberAbsen = savedAbsenData ? JSON.parse(savedAbsenData) : [];
+                
+                memberAbsenName.innerText = targetUser;
+                populateCalendar(memberAbsen, memberAbsenGrid);
+                
+                masterPage.style.display = 'none';
+                memberAbsenPage.style.display = 'block';
+            }
+        });
+
+        adminList.addEventListener('click', (event) => {
+            if (event.target.classList.contains('delete-btn')) {
+                const userToDelete = event.target.dataset.user;
+                if (userToDelete === 'admin') {
+                    alert('Username "admin" tidak bisa dihapus!');
+                    return;
+                }
+                if (confirm(`Yakin ingin menghapus admin "${userToDelete}"?`)) {
+                    adminUsers = adminUsers.filter(user => user !== userToDelete);
+                    saveToLocalStorage();
+                    populateAdminList();
+                }
+            } else if (event.target.classList.contains('edit-btn')) {
+                const userToEdit = event.target.dataset.user;
+                const newName = prompt(`Masukkan nama baru untuk admin "${userToEdit}":`);
+                if (newName && newName.trim() !== '' && !adminUsers.includes(newName.trim().toLowerCase())) {
+                    const index = adminUsers.indexOf(userToEdit);
+                    adminUsers[index] = newName.trim().toLowerCase();
+                    saveToLocalStorage();
+                    populateAdminList();
+                } else if (newName) {
+                    alert('Nama baru tidak valid atau sudah ada!');
+                }
+            }
+        });
+
+        backToMasterBtn.addEventListener('click', () => {
+            memberAbsenPage.style.display = 'none';
+            masterPage.style.display = 'block';
+        });
+    </script>
+</body>
+</html>s
